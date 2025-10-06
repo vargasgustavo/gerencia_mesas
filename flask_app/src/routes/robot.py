@@ -1,5 +1,36 @@
 from flask import Blueprint, jsonify, request
-return jsonify({'message': 'Erro', 'error': msg}), 500
+@token_required
+def connect():
+    ok, msg = _robot.connect()
+    if ok:
+        return jsonify({'message': 'Robô conectado com sucesso'})
+    return jsonify({'message': 'Erro ao conectar', 'error': msg}), 500
+
+
+@bp.route('/disconnect', methods=['POST'])
+@token_required
+def disconnect():
+    _robot.disconnect()
+    return jsonify({'message': 'Robô desconectado'})
+
+
+@bp.route('/status', methods=['GET'])
+@token_required
+def status():
+    return jsonify({'status': _robot.get_status()})
+
+
+@bp.route('/move', methods=['POST'])
+@token_required
+def move():
+    data = request.json or {}
+    table_id = data.get('table_id')
+    if table_id is None:
+        return jsonify({'message': 'table_id required'}), 400
+    ok, msg = _robot.send_move(table_id)
+    if ok:
+        return jsonify({'message': 'Comando enviado'})
+    return jsonify({'message': 'Erro', 'error': msg}), 500
 
 
 @bp.route('/clean', methods=['POST'])
@@ -8,10 +39,10 @@ def clean():
     data = request.json or {}
     table_id = data.get('table_id')
     if table_id is None:
-    return jsonify({'message': 'table_id required'}), 400
+        return jsonify({'message': 'table_id required'}), 400
     ok, msg = _robot.send_clean(table_id)
     if ok:
-    return jsonify({'message': 'Comando de limpeza enviado'})
+        return jsonify({'message': 'Comando de limpeza enviado'})
     return jsonify({'message': 'Erro', 'error': msg}), 500
 
 
@@ -22,7 +53,7 @@ def check():
     table_id = data.get('table_id')
     ok, msg = _robot.send_check(table_id)
     if ok:
-    return jsonify({'message': 'Comando de verificação enviado'})
+        return jsonify({'message': 'Comando de verificação enviado'})
     return jsonify({'message': 'Erro', 'error': msg}), 500
 
 
@@ -31,25 +62,25 @@ def check():
 def retbase():
     ok, msg = _robot.send_return()
     if ok:
-    return jsonify({'message': 'Robô retornando'})
+        return jsonify({'message': 'Robô retornando'})
     return jsonify({'message': 'Erro', 'error': msg}), 500
 
 
 @bp.route('/stop', methods=['POST'])
 @token_required
 def stop():
-ok, msg = _robot.send_stop()
-if ok:
-return jsonify({'message': 'Robô parado'})
-return jsonify({'message': 'Erro', 'error': msg}), 500
+    ok, msg = _robot.send_stop()
+    if ok:
+        return jsonify({'message': 'Robô parado'})
+    return jsonify({'message': 'Erro', 'error': msg}), 500
 
 
 @bp.route('/commands/history', methods=['GET'])
 @token_required
 def history():
-limit = int(request.args.get('limit', 50))
-db = __import__('..database', fromlist=['get_db']).database.get_db()
-with db.cursor() as cur:
-cur.execute('SELECT * FROM robot_commands ORDER BY sent_at DESC LIMIT %s', (limit,))
-rows = cur.fetchall()
-return jsonify({'history': rows})
+    limit = int(request.args.get('limit', 50))
+    db = __import__('..database', fromlist=['get_db']).database.get_db()
+    with db.cursor() as cur:
+        cur.execute('SELECT * FROM robot_commands ORDER BY sent_at DESC LIMIT %s', (limit,))
+    rows = cur.fetchall()
+    return jsonify({'history': rows})

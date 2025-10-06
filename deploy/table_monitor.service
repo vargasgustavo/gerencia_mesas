@@ -1,0 +1,17 @@
+[Unit]
+Description=Table Monitor System
+After=network.target mysql.service
+
+
+[Service]
+Type=simple
+User=tablemanager
+WorkingDirectory=/home/tablemanager/table_monitor_system/flask_app
+Environment=PATH=/home/tablemanager/table_monitor_system/flask_app/venv/bin
+ExecStart=/home/tablemanager/table_monitor_system/flask_app/venv/bin/python -m src.main
+Restart=always
+RestartSec=10
+
+
+[Install]
+WantedBy=multi-user.target
